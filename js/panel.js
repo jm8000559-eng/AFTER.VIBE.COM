@@ -28,47 +28,38 @@ const ADMIN_PASS = 'AfterVibes2026!';
 // CONFIGURACIÓN DE SUPABASE
 // ==========================================
 const SUPABASE_URL = 'https://twpyshiphbxsktqufcqr.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable__IP4v7u312QkdZpBujwZFg_7vYcXe1v'; 
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3cHlzaGlwaGJ4c2t0cXVmY3FyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0MjMxMjYsImV4cCI6MjEwNDk5OTEyNn0.-2JxpF-iHJHkyT786o53XfABBT6TACptgfr-kWVOd6k'; 
+
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ==========================================
-// CARGAR REGISTROS
+// CARGAR REGISTROS DESDE LA TABLA 'solicitudes'
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   const applicantsList = document.getElementById('applicantsList');
 
   async function fetchApplicants() {
     try {
-      // 1. Mensaje inicial mientras responde
       applicantsList.innerHTML = `
         <tr>
-          <td colspan="6" style="text-align:center; color: var(--text-dim);">Conectando con Supabase...</td>
+          <td colspan="6" style="text-align:center; color: var(--text-dim);">Cargando postulaciones...</td>
         </tr>`;
 
-      // 2. Intentar consulta con Timeout de 8 segundos
-      const fetchPromise = supabase
+      const { data: applicants, error } = await supabase
         .from('solicitudes')
         .select('*')
         .order('id', { ascending: false });
 
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Tiempo de espera agotado. Revisa las políticas RLS o la API Key en Supabase.')), 8000)
-      );
-
-      const { data: applicants, error } = await Promise.race([fetchPromise, timeoutPromise]);
-
       if (error) throw error;
 
-      // 3. Si la tabla está vacía
       if (!applicants || applicants.length === 0) {
         applicantsList.innerHTML = `
           <tr>
-            <td colspan="6" style="text-align:center; color: var(--text-dim);">No hay solicitudes registradas aún en la tabla 'solicitudes'.</td>
+            <td colspan="6" style="text-align:center; color: var(--text-dim);">No hay solicitudes registradas aún.</td>
           </tr>`;
         return;
       }
 
-      // 4. Renderizar registros
       applicantsList.innerHTML = '';
       applicants.forEach((item) => {
         const row = document.createElement('tr');
@@ -96,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
       applicantsList.innerHTML = `
         <tr>
           <td colspan="6" style="text-align:center; color: #ff3366; padding: 20px;">
-            ⚠️ <strong>Error al cargar la información:</strong><br>
+            ⚠️ <strong>Error al cargar los datos:</strong><br>
             <small>${err.message}</small>
           </td>
         </tr>`;
@@ -113,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (error) throw error;
       fetchApplicants();
     } catch (err) {
-      alert('Error actualizando estado: ' + err.message);
+      alert('Error al cambiar el estado: ' + err.message);
     }
   };
 
