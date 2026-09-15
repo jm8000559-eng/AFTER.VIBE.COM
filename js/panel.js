@@ -4,7 +4,7 @@
 const ADMIN_USER = 'admin';
 const ADMIN_PASS = 'AfterVibes2026!';
 
-// Verificación de sesión e ingreso de credenciales
+// Verificación de sesión
 (function checkAdminAccess() {
   const sessionAuth = sessionStorage.getItem('admin_authenticated');
   
@@ -27,19 +27,18 @@ const ADMIN_PASS = 'AfterVibes2026!';
 })();
 
 // ==========================================
-// CONFIGURACIÓN DE SUPABASE
+// CONFIGURACIÓN DE SUPABASE (TUS DATOS REALES)
 // ==========================================
 const SUPABASE_URL = 'https://twpyshiphbxsktqufcqr.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable__IP4v7u312QkdZpBujwZFg_7vYcXe1v';
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ==========================================
-// LÓGICA DE GESTIÓN DE SOLICITUDES
+// CARGAR Y GESTIONAR REGISTROS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   const applicantsList = document.getElementById('applicantsList');
 
-  // Función para obtener y renderizar la lista de postulantes
   async function fetchApplicants() {
     try {
       const { data: applicants, error } = await supabase
@@ -50,7 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (error) throw error;
 
       if (!applicants || applicants.length === 0) {
-        applicantsList.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-dim);">No hay solicitudes registradas aún.</td></tr>`;
+        applicantsList.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align:center; color: var(--text-dim);">No hay solicitudes registradas aún.</td>
+          </tr>`;
         return;
       }
 
@@ -59,7 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
       applicants.forEach((item) => {
         const row = document.createElement('tr');
 
-        // Formato para usuario de TikTok
         const tiktokUser = item.tiktok.startsWith('@') ? item.tiktok : `@${item.tiktok}`;
         const tiktokClean = tiktokUser.replace('@', '');
 
@@ -80,12 +81,16 @@ document.addEventListener('DOMContentLoaded', () => {
         applicantsList.appendChild(row);
       });
     } catch (err) {
-      console.error('Error al cargar datos desde Supabase:', err);
-      applicantsList.innerHTML = `<tr><td colspan="6" style="text-align:center; color: #ff3366;">Error al conectar con la base de datos.</td></tr>`;
+      console.error('Error al cargar datos:', err);
+      applicantsList.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center; color: #ff3366;">
+            Error al conectar con la base de datos.<br><small>${err.message}</small>
+          </td>
+        </tr>`;
     }
   }
 
-  // Función global para actualizar estado (Aprobado / Rechazado)
   window.updateStatus = async function(id, newStatus) {
     try {
       const { error } = await supabase
@@ -94,22 +99,18 @@ document.addEventListener('DOMContentLoaded', () => {
         .eq('id', id);
 
       if (error) throw error;
-      
-      // Recargar la tabla con los estados actualizados
       fetchApplicants();
     } catch (err) {
-      console.error('Error actualizando el estado:', err);
-      alert('No se pudo actualizar el estado de la solicitud.');
+      console.error('Error actualizando estado:', err);
+      alert('No se pudo actualizar el estado.');
     }
   };
 
-  // Asignar clase de CSS según el estado de la solicitud
   function getStatusClass(status) {
     if (status === 'Aprobado') return 'approved';
     if (status === 'Rechazado') return 'rejected';
     return 'pending';
   }
 
-  // Cargar datos al iniciar
   fetchApplicants();
 });
