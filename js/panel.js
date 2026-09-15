@@ -25,12 +25,13 @@ const ADMIN_PASS = 'AfterVibes2026!';
 })();
 
 // ==========================================
-// CONFIGURACIÓN DE SUPABASE
+// CONFIGURACIÓN DE SUPABASE (Cliente Admin local)
 // ==========================================
 const SUPABASE_URL = 'https://twpyshiphbxsktqufcqr.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3cHlzaGlwaGJ4c2t0cXVmY3FyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk0MjMxMjYsImV4cCI6MjEwNDk5OTEyNn0.-2JxpF-iHJHkyT786o53XfABBT6TACptgfr-kWVOd6k'; 
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Renombrado a supabaseAdmin para evitar duplicados en el navegador
+const supabaseAdmin = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ==========================================
 // CARGAR REGISTROS
@@ -45,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td colspan="6" style="text-align:center; color: var(--text-dim);">Cargando solicitudes...</td>
         </tr>`;
 
-      const { data: applicants, error } = await supabase
+      const { data: applicants, error } = await supabaseAdmin
         .from('solicitudes')
         .select('*');
 
@@ -54,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!applicants || applicants.length === 0) {
         applicantsList.innerHTML = `
           <tr>
-            <td colspan="6" style="text-align:center; color: var(--text-dim);">No hay registros en la tabla "solicitudes".</td>
+            <td colspan="6" style="text-align:center; color: var(--text-dim);">No hay solicitudes registradas aún en la base de datos.</td>
           </tr>`;
         return;
       }
@@ -90,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
       applicantsList.innerHTML = `
         <tr>
           <td colspan="6" style="text-align:center; color: #ff3366; padding: 20px;">
-            ⚠️ <strong>Error de lectura:</strong> ${err.message || 'No se pudo conectar a Supabase'}
+            ⚠️ <strong>Error al obtener los datos:</strong> ${err.message}
           </td>
         </tr>`;
     }
@@ -98,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.updateStatus = async function(id, newStatus) {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from('solicitudes')
         .update({ status: newStatus })
         .eq('id', id);
@@ -106,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (error) throw error;
       fetchApplicants();
     } catch (err) {
-      alert('Error al actualizar: ' + err.message);
+      alert('Error al actualizar el estado: ' + err.message);
     }
   };
 
