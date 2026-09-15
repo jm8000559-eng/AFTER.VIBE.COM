@@ -33,7 +33,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ==========================================
-// CARGAR REGISTROS DESDE LA TABLA 'solicitudes'
+// CARGAR REGISTROS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
   const applicantsList = document.getElementById('applicantsList');
@@ -42,35 +42,38 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       applicantsList.innerHTML = `
         <tr>
-          <td colspan="6" style="text-align:center; color: var(--text-dim);">Cargando postulaciones...</td>
+          <td colspan="6" style="text-align:center; color: var(--text-dim);">Cargando solicitudes...</td>
         </tr>`;
 
       const { data: applicants, error } = await supabase
         .from('solicitudes')
-        .select('*')
-        .order('id', { ascending: false });
+        .select('*');
 
       if (error) throw error;
 
       if (!applicants || applicants.length === 0) {
         applicantsList.innerHTML = `
           <tr>
-            <td colspan="6" style="text-align:center; color: var(--text-dim);">No hay solicitudes registradas aún.</td>
+            <td colspan="6" style="text-align:center; color: var(--text-dim);">No hay registros en la tabla "solicitudes".</td>
           </tr>`;
         return;
       }
 
+      // Ordenar manualmente por ID descendente
+      applicants.sort((a, b) => b.id - a.id);
+
       applicantsList.innerHTML = '';
       applicants.forEach((item) => {
         const row = document.createElement('tr');
-        const tiktokUser = (item.tiktok || '').startsWith('@') ? item.tiktok : `@${item.tiktok || ''}`;
-        const tiktokClean = tiktokUser.replace('@', '');
+        const rawTiktok = item.tiktok || '';
+        const tiktokUser = rawTiktok.startsWith('@') ? rawTiktok : `@${rawTiktok}`;
+        const tiktokClean = rawTiktok.replace('@', '');
 
         row.innerHTML = `
-          <td><strong>${item.fullname || 'Sin nombre'}</strong></td>
-          <td>${item.age || '-'}</td>
+          <td><strong>${item.fullname || item.nombre || 'Sin nombre'}</strong></td>
+          <td>${item.age || item.edad || '-'}</td>
           <td><a href="https://tiktok.com/@${tiktokClean}" target="_blank" class="tiktok-link">${tiktokUser}</a></td>
-          <td>${item.phone || '-'}</td>
+          <td>${item.phone || item.telefono || '-'}</td>
           <td><span class="status ${getStatusClass(item.status)}">${item.status || 'Pendiente'}</span></td>
           <td>
             <div class="actions">
@@ -83,12 +86,11 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
     } catch (err) {
-      console.error('Error:', err);
+      console.error('Error detallado:', err);
       applicantsList.innerHTML = `
         <tr>
           <td colspan="6" style="text-align:center; color: #ff3366; padding: 20px;">
-            ⚠️ <strong>Error al cargar los datos:</strong><br>
-            <small>${err.message}</small>
+            ⚠️ <strong>Error de lectura:</strong> ${err.message || 'No se pudo conectar a Supabase'}
           </td>
         </tr>`;
     }
@@ -104,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (error) throw error;
       fetchApplicants();
     } catch (err) {
-      alert('Error al cambiar el estado: ' + err.message);
+      alert('Error al actualizar: ' + err.message);
     }
   };
 
